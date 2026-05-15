@@ -53,7 +53,7 @@ const FiszRadio = () => {
   }, [playing]);
 
   const nextShow = () => {
-    setCurrentShow(SHOPS[(SHOPS.indexOf(currentShow) + 1) % SHOPS.length]);
+    setCurrentShow(SHOWS[(SHOWS.indexOf(currentShow) + 1) % SHOWS.length]);
     setProgress(0);
   };
 

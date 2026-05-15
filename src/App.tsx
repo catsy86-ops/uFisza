@@ -7,6 +7,10 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { AnimatePresence } from "framer-motion";
 import PageTransition from "@/components/PageTransition";
 import DrunkOverlay from "@/components/DrunkOverlay";
+import ScrollProgress from "@/components/ScrollProgress";
+import CursorTrail from "@/components/CursorTrail";
+import FiszPet from "@/components/FiszPet";
+import BackToTop from "@/components/BackToTop";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 import OrderHistory from "./pages/OrderHistory.tsx";
@@ -51,7 +55,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ScrollProgress />
+          <CursorTrail />
           <AnimatedRoutes />
+          <FiszPet />
+          <BackToTop />
           <DrunkOverlay />
         </AuthProvider>
       </BrowserRouter>

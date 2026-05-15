@@ -365,4 +365,76 @@
   .anim-clink {
     animation: clink 4s ease-in-out infinite;
   }
+
+  /* Fish swim */
+  @keyframes fish-swim {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-6px) rotate(2deg); }
+    50% { transform: translateY(-2px) rotate(-1deg); }
+    75% { transform: translateY(-8px) rotate(1deg); }
+  }
+  .animate-fish-swim {
+    animation: fish-swim 4s ease-in-out infinite;
+  }
+
+  /* Bubble rise */
+  @keyframes bubble-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.7; }
+    100% { transform: translateY(-80px) scale(0.3); opacity: 0; }
+  }
+  .animate-bubble-rise {
+    animation: bubble-rise 1.5s ease-out forwards;
+  }
+
+  /* Fisz pet glow pulse */
+  @keyframes fisz-glow {
+    0%, 100% { box-shadow: 0 0 8px hsl(var(--beer-gold) / 0.3), 0 0 20px hsl(var(--beer-gold) / 0.1); }
+    50% { box-shadow: 0 0 16px hsl(var(--beer-gold) / 0.5), 0 0 40px hsl(var(--beer-gold) / 0.2); }
+  }
+  .animate-fisz-glow {
+    animation: fisz-glow 3s ease-in-out infinite;
+  }
+
+  /* Card tilt perspective */
+  .card-3d-tilt {
+    transform-style: preserve-3d;
+    perspective: 800px;
+  }
+
+  /* Ripple effect for buttons */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+  .ripple-container .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, hsl(var(--beer-gold) / 0.3) 0%, transparent 70%);
+    transform: scale(0);
+    animation: ripple-effect 0.6s ease-out;
+    pointer-events: none;
+  }
+  @keyframes ripple-effect {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  /* Back-to-top shimmer */
+  @keyframes shimmer-border {
+    0% { border-color: hsl(var(--beer-gold) / 0.2); }
+    50% { border-color: hsl(var(--beer-gold) / 0.6); }
+    100% { border-color: hsl(var(--beer-gold) / 0.2); }
+  }
+  .animate-shimmer-border {
+    animation: shimmer-border 2s ease-in-out infinite;
+  }
+
+  /* Scroll progress shimmer */
+  @keyframes progress-shimmer {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.3); }
+    100% { filter: brightness(1); }
+  }
+  .animate-progress-shimmer {
+    animation: progress-shimmer 3s ease-in-out infinite;
+  }
 }

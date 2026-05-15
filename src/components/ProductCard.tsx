@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Product } from "@/types/product";
@@ -17,6 +17,26 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const addItem = useCartStore((s) => s.addItem);
   const [isFav, setIsFav] = useState(false);
   const [quickView, setQuickView] = useState(false);
+  const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const isHovering = useRef(false);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    setTilt({ x: (y - 0.5) * -8, y: (x - 0.5) * 8 });
+  };
+
+  const handleMouseLeave = () => {
+    isHovering.current = false;
+    setTilt({ x: 0, y: 0 });
+  };
+
+  const handleMouseEnter = () => {
+    isHovering.current = true;
+  };
 
   const { data: stats } = useQuery({
     queryKey: ["review-stats", product.id],
@@ -49,7 +69,15 @@ const ProductCard = ({ product }: ProductCardProps) => {
   return (
     <Link to={`/produkt/${product.id}`} className="block group">
       <motion.div
-        className="relative bg-card rounded-2xl overflow-hidden border border-border/40 shadow-sm"
+        ref={cardRef}
+        className="relative bg-card rounded-2xl overflow-hidden border border-border/40 shadow-sm card-3d-tilt"
+        style={{
+          transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
+          transition: isHovering.current ? "transform 0.1s ease-out" : "transform 0.4s ease-out",
+        }}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         whileHover={{
           y: -8,
           transition: { type: "spring", stiffness: 300, damping: 20 },
