@@ -1,17 +1,28 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Truck, MapPin, Beer, Fish, Package, CheckCircle } from "lucide-react";
+import { Truck, MapPin, Beer, Fish, Package, RotateCcw, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 
 const BARS_ON_ROUTE = [
-  { name: "Bar Pod Złotym Karpiem", lat: 53.435, lng: 14.560, delay: 2000 },
-  { name: "Knajpa U Wujka Staszka", lat: 53.440, lng: 14.555, delay: 3000 },
-  { name: "Piwiarnia Na Rogu", lat: 53.430, lng: 14.565, delay: 1500 },
-  { name: "Whisky Bar Dno", lat: 53.445, lng: 14.550, delay: 4000 },
-  { name: "Stacja Paliw (z barem)", lat: 53.438, lng: 14.558, delay: 1000 },
+  { name: "Bar Pod Złotym Karpiem", lat: 53.435, lng: 14.560, delay: 2000, x: 20, y: 75 },
+  { name: "Knajpa U Wujka Staszka", lat: 53.440, lng: 14.555, delay: 3000, x: 35, y: 55 },
+  { name: "Piwiarnia Na Rogu", lat: 53.430, lng: 14.565, delay: 1500, x: 50, y: 40 },
+  { name: "Whisky Bar Dno", lat: 53.445, lng: 14.550, delay: 4000, x: 70, y: 60 },
+  { name: "Stacja Paliw (z barem)", lat: 53.438, lng: 14.558, delay: 1000, x: 85, y: 25 },
+];
+
+const DELIVERY_PATH = [
+  { x: 10, y: 85 },
+  { x: 20, y: 75 },
+  { x: 35, y: 55 },
+  { x: 50, y: 40 },
+  { x: 70, y: 60 },
+  { x: 85, y: 25 },
+  { x: 92, y: 10 },
 ];
 
 interface DeliveryStep {
@@ -20,12 +31,23 @@ interface DeliveryStep {
   delay: number;
 }
 
+const generateOrderId = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "UF-";
+  for (let i = 0; i < 8; i++) {
+    result += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return result;
+};
+
 const DeliveryTracker = () => {
   const [started, setStarted] = useState(false);
   const [delivered, setDelivered] = useState(false);
   const [steps, setSteps] = useState<DeliveryStep[]>([]);
   const [currentStep, setCurrentStep] = useState(-1);
   const [fiszThought, setFiszThought] = useState("");
+  const [orderId] = useState(() => generateOrderId());
+  const [activeBars, setActiveBars] = useState<typeof BARS_ON_ROUTE>([]);
 
   const FISZ_THOUGHTS = [
     "Fisz ładuje paczkę na bagażnik 🚲",
@@ -51,6 +73,7 @@ const DeliveryTracker = () => {
 
     const numBars = 2 + Math.floor(Math.random() * 4);
     const shuffled = [...BARS_ON_ROUTE].sort(() => Math.random() - 0.5).slice(0, numBars);
+    setActiveBars(shuffled);
 
     for (let i = 0; i < numBars; i++) {
       result.push({
@@ -74,12 +97,22 @@ const DeliveryTracker = () => {
   };
 
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const stepsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     return () => {
       timersRef.current.forEach(clearTimeout);
     };
   }, []);
+
+  useEffect(() => {
+    if (currentStep >= 0 && stepsContainerRef.current) {
+      const activeEl = stepsContainerRef.current.querySelector(`[data-step="${currentStep}"]`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [currentStep]);
 
   const startDelivery = () => {
     timersRef.current.forEach(clearTimeout);
@@ -106,6 +139,20 @@ const DeliveryTracker = () => {
     });
   };
 
+  const cancelDelivery = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
+    setStarted(false);
+    setDelivered(false);
+    setCurrentStep(-1);
+    setSteps([]);
+    setFiszThought("");
+  };
+
+  const progress = steps.length > 0 ? ((currentStep + 1) / steps.length) * 100 : 0;
+
+  const fishPosition = currentStep >= 0 ? DELIVERY_PATH[Math.min(currentStep, DELIVERY_PATH.length - 1)] : null;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -131,6 +178,11 @@ const DeliveryTracker = () => {
             <p className="text-muted-foreground text-sm max-w-md mx-auto">
               Fisz osobiście dostarcza Twoje zamówienie... podobno. Śledź jego (mniej więcej) trasę. 🐟📦
             </p>
+            {started && (
+              <p className="text-muted-foreground/50 text-xs mt-2 font-mono">
+                Zamówienie: {orderId}
+              </p>
+            )}
           </motion.div>
 
           <motion.div
@@ -138,6 +190,16 @@ const DeliveryTracker = () => {
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card rounded-3xl p-5 md:p-8 border border-beer-gold/15"
           >
+            {started && !delivered && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-beer-gold/70 font-semibold">Postęp dostawy</span>
+                  <span className="text-xs text-beer-gold/70 font-mono">{Math.round(progress)}%</span>
+                </div>
+                <Progress value={progress} className="h-2 bg-beer-dark/50" />
+              </div>
+            )}
+
             {/* Map */}
             <div className="relative rounded-2xl overflow-hidden mb-6 border border-beer-gold/10 min-h-[200px] md:min-h-[280px] aspect-square sm:aspect-[4/3] md:aspect-video bg-beer-dark/50 flex items-center justify-center">
               {!started ? (
@@ -146,16 +208,81 @@ const DeliveryTracker = () => {
                   <p className="text-muted-foreground text-xs">Mapa Szczecina [symulacja]</p>
                 </div>
               ) : (
-                <motion.div
-                  className="absolute"
-                  animate={{
-                    left: ["10%", "30%", "15%", "50%", "45%", "70%", "80%", "60%", "90%"],
-                    top: ["80%", "50%", "70%", "30%", "60%", "40%", "20%", "50%", "15%"],
-                  }}
-                  transition={{ duration: (steps.length * 1.5) || 10, ease: "linear" }}
-                >
-                  <Fish className="h-8 w-8 md:h-10 md:w-10 text-beer-gold" />
-                </motion.div>
+                <div className="absolute inset-0">
+                  {/* Grid lines */}
+                  <svg className="absolute inset-0 w-full h-full opacity-10">
+                    {[...Array(10)].map((_, i) => (
+                      <line key={`h-${i}`} x1="0" y1={`${i * 10}%`} x2="100%" y2={`${i * 10}%`} stroke="hsl(var(--beer-gold))" strokeWidth="0.5" />
+                    ))}
+                    {[...Array(10)].map((_, i) => (
+                      <line key={`v-${i}`} x1={`${i * 10}%`} y1="0" x2={`${i * 10}%`} y2="100%" stroke="hsl(var(--beer-gold))" strokeWidth="0.5" />
+                    ))}
+                  </svg>
+
+                  {/* Route path */}
+                  <svg className="absolute inset-0 w-full h-full">
+                    <defs>
+                      <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="hsl(var(--beer-gold))" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="hsl(var(--beer-gold))" stopOpacity="0.8" />
+                      </linearGradient>
+                    </defs>
+                    <polyline
+                      points={DELIVERY_PATH.map(p => `${p.x}%,${p.y}%`).join(' ')}
+                      fill="none"
+                      stroke="url(#routeGradient)"
+                      strokeWidth="2"
+                      strokeDasharray="4 4"
+                      className="opacity-60"
+                    />
+                  </svg>
+
+                  {/* Bar markers */}
+                  {activeBars.map((bar, i) => (
+                    <motion.div
+                      key={bar.name}
+                      className="absolute"
+                      style={{ left: `${bar.x}%`, top: `${bar.y}%` }}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: i * 0.3, type: "spring" }}
+                    >
+                      <div className="relative group">
+                        <Beer className="h-4 w-4 text-beer-amber/60" />
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-beer-dark text-[10px] text-beer-foam/80 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none border border-beer-gold/20">
+                          {bar.name}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* Start point */}
+                  <div className="absolute" style={{ left: "10%", top: "85%" }}>
+                    <div className="w-3 h-3 rounded-full bg-beer-hop/60 border border-beer-hop" />
+                  </div>
+
+                  {/* End point */}
+                  <div className="absolute" style={{ left: "92%", top: "10%" }}>
+                    <div className="w-4 h-4 rounded-full bg-beer-gold/40 border border-beer-gold animate-pulse" />
+                  </div>
+
+                  {/* Fish on route */}
+                  {fishPosition && (
+                    <motion.div
+                      className="absolute z-10"
+                      animate={{
+                        left: `${fishPosition.x}%`,
+                        top: `${fishPosition.y}%`,
+                      }}
+                      transition={{ duration: 0.8, ease: "easeInOut" }}
+                    >
+                      <div className="relative -translate-x-1/2 -translate-y-1/2">
+                        <div className="absolute inset-0 bg-beer-gold/20 rounded-full blur-md animate-pulse" />
+                        <Fish className="h-8 w-8 md:h-10 md:w-10 text-beer-gold relative z-10" />
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -174,12 +301,25 @@ const DeliveryTracker = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-beer-gold text-xs font-bold uppercase tracking-wider mb-3">
-                  <Truck className="h-3.5 w-3.5" />
-                  Status dostawy:
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-beer-gold text-xs font-bold uppercase tracking-wider">
+                    <Truck className="h-3.5 w-3.5" />
+                    Status dostawy:
+                  </div>
+                  {!delivered && (
+                    <Button
+                      onClick={cancelDelivery}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-muted-foreground/60 hover:text-red-400 min-h-[32px]"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Anuluj
+                    </Button>
+                  )}
                 </div>
 
-                <div className="max-h-[50vh] overflow-y-auto pr-1 space-y-3">
+                <div ref={stepsContainerRef} className="max-h-[50vh] overflow-y-auto pr-1 space-y-3">
                   <AnimatePresence>
                     {steps.map((step, i) => {
                       const done = i <= currentStep;
@@ -187,6 +327,7 @@ const DeliveryTracker = () => {
                       return (
                         <motion.div
                           key={i}
+                          data-step={i}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: i <= currentStep + 1 ? 1 : 0, x: 0 }}
                           className="flex items-start gap-3"
@@ -241,13 +382,16 @@ const DeliveryTracker = () => {
                     <p className="text-muted-foreground text-xs mt-1">
                       Fisz zrobił to... jakoś. Twój trunek czeka na otwarcie!
                     </p>
-                    <Button
-                      onClick={startDelivery}
-                      variant="ghost"
-                      className="mt-3 text-xs text-beer-gold/70 hover:text-beer-gold min-h-[44px]"
-                    >
-                      Śledź kolejną paczkę
-                    </Button>
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <Button
+                        onClick={startDelivery}
+                        variant="ghost"
+                        className="text-xs text-beer-gold/70 hover:text-beer-gold min-h-[44px]"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Śledź kolejną paczkę
+                      </Button>
+                    </div>
                   </motion.div>
                 )}
               </div>
