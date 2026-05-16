@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logoImg from "@/assets/logo-u-fisza.png";
@@ -11,6 +11,20 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <p className="text-5xl mb-4">⚠️</p>
+          <h1 className="font-display text-2xl font-bold text-foreground mb-2">Brak konfiguracji</h1>
+          <p className="text-muted-foreground text-sm">
+            Zmienne środowiskowe Supabase nie są ustawione. Skonfiguruj VITE_SUPABASE_URL i VITE_SUPABASE_PUBLISHABLE_KEY w ustawieniach projektu na Vercelu i wykonaj redeploy.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
