@@ -1,11 +1,18 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
-const BUBBLE_COUNT = 18;
-const HOP_COUNT = 6;
+const MOBILE_BUBBLE_COUNT = 6;
+const DESKTOP_BUBBLE_COUNT = 18;
+const MOBILE_HOP_COUNT = 2;
+const DESKTOP_HOP_COUNT = 6;
 
 const BeerAmbient = () => {
   const ref = useRef<HTMLDivElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
@@ -24,7 +31,7 @@ const BeerAmbient = () => {
   return (
     <div ref={ref} className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Floating bubbles */}
-      {Array.from({ length: BUBBLE_COUNT }).map((_, i) => {
+      {Array.from({ length: isMobile ? MOBILE_BUBBLE_COUNT : DESKTOP_BUBBLE_COUNT }).map((_, i) => {
         const size = 4 + Math.random() * 20;
         const left = Math.random() * 100;
         const duration = 8 + Math.random() * 20;
@@ -61,7 +68,7 @@ const BeerAmbient = () => {
       })}
 
       {/* Floating hops 🌿 */}
-      {Array.from({ length: HOP_COUNT }).map((_, i) => {
+      {Array.from({ length: isMobile ? MOBILE_HOP_COUNT : DESKTOP_HOP_COUNT }).map((_, i) => {
         const left = 5 + Math.random() * 90;
         const duration = 15 + Math.random() * 25;
         const delay = Math.random() * 20;

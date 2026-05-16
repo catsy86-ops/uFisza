@@ -143,6 +143,7 @@ export const useCartStore = create<CartStore>((set, get) => {
         return { items: [...state.items, { product, quantity: 1 }], removalStreak: 0 };
       });
       validate();
+      try { window.dispatchEvent(new CustomEvent("fisz-cart-add")); } catch {}
     },
     removeItem: (productId) => {
       set((state) => {

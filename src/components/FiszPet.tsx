@@ -6,7 +6,7 @@ type Mood = "happy" | "excited" | "sad" | "sleepy" | "party" | "curious";
 
 const MOOD_EMOJIS: Record<Mood, string> = {
   happy: "🐟",
-  excited: "🎉",
+  excited: "🤩",
   sad: "😢",
   sleepy: "😴",
   party: "🥳",
@@ -24,7 +24,7 @@ const SPEECH_BUBBLES: Record<Mood, string[]> = {
   excited: [
     "DODAJ WIĘCEJ! 🍺",
     "Fisz jest szczęśliwy!",
-    " impreza u Fisza!",
+    "Impreza u Fisza!",
     "Złota rybka się udała!",
   ],
   sad: [
@@ -45,25 +45,42 @@ const FiszPet = () => {
   const [bubble, setBubble] = useState<string | null>(null);
   const [isHidden, setIsHidden] = useState(() => {
     try {
-      return localStorage.getItem("fisz_pet_hidden") === "true";
+      return localStorage.getItem("fisz_pet_hidden") === "true" || window.innerWidth < 768;
     } catch {
-      return false;
+      return true;
     }
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [spinCount, setSpinCount] = useState(0);
   const [showBubbles, setShowBubbles] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const itemcount = useCartStore((s) => s.items.length);
 
-  const petX = useMotionValue(window.innerWidth - 100);
-  const petY = useMotionValue(window.innerHeight - 120);
+  const petX = useMotionValue(typeof window !== "undefined" ? Math.min(window.innerWidth - 80, window.innerWidth - 80) : 300);
+  const petY = useMotionValue(typeof window !== "undefined" ? window.innerHeight - 100 : 500);
   const springX = useSpring(petX, { stiffness: 80, damping: 20 });
   const springY = useSpring(petY, { damping: 20, stiffness: 80 });
 
   const lastMouseRef = useRef({ x: 0, y: 0 });
   const bubbleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const moodTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    if (mobile) return;
+
+    const onResize = () => {
+      const newX = Math.min(petX.get(), window.innerWidth - 80);
+      const newY = Math.min(petY.get(), window.innerHeight - 80);
+      petX.set(newX);
+      petY.set(newY);
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [petX, petY]);
 
   const showSpeechBubble = useCallback((text: string) => {
     setBubble(text);
@@ -83,6 +100,7 @@ const FiszPet = () => {
   );
 
   useEffect(() => {
+    if (isMobile) return;
     if (itemcount > 0) {
       setMood("excited");
       const texts = SPEECH_BUBBLES.excited;
@@ -95,47 +113,72 @@ const FiszPet = () => {
       if (moodTimerRef.current) clearTimeout(moodTimerRef.current);
       moodTimerRef.current = setTimeout(() => setMood("happy"), 3000);
     }
-  }, [itemcount, showSpeechBubble]);
+  }, [itemcount, showSpeechBubble, isMobile]);
 
   useEffect(() => {
+    if (isMobile) return;
     const handleMouseMove = (e: MouseEvent) => {
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
       if (!isDragging) return;
-      const dx = e.clientX - dragOffset.x;
-      const dy = e.clientY - dragOffset.y;
-      petX.set(dx);
-      petY.set(dy);
+      petX.set(e.clientX - dragOffset.x);
+      petY.set(e.clientY - dragOffset.y);
     };
 
     const handleMouseDown = (e: MouseEvent) => {
-      const rect = { x: springX.get() - 28, y: springY.get() - 28, w: 56, h: 56 };
-      if (
-        e.clientX >= rect.x &&
-        e.clientX <= rect.x + rect.w &&
-        e.clientY >= rect.y &&
-        e.clientY <= rect.y + rect.h
-      ) {
+      const px = springX.get();
+      const py = springY.get();
+      const dx = e.clientX - px;
+      const dy = e.clientY - py;
+      if (dx * dx + dy * dy < 35 * 35) {
         setIsDragging(true);
-        setDragOffset({ x: e.clientX - springX.get(), y: e.clientY - springY.get() });
+        setDragOffset({ x: dx, y: dy });
       }
     };
 
-    const handleMouseUp = () => {
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      const px = springX.get();
+      const py = springY.get();
+      const dx = touch.clientX - px;
+      const dy = touch.clientY - py;
+      if (dx * dx + dy * dy < 50 * 50) {
+        setIsDragging(true);
+        setDragOffset({ x: dx, y: dy });
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!isDragging) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      petX.set(touch.clientX - dragOffset.x);
+      petY.set(touch.clientY - dragOffset.y);
+    };
+
+    const handleEnd = () => {
       setIsDragging(false);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mousedown", handleMouseDown);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("mouseup", handleEnd);
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleEnd);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mouseup", handleEnd);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleEnd);
     };
-  }, [isDragging, dragOffset, petX, petY, springX, springY]);
+  }, [isDragging, dragOffset, petX, petY, springX, springY, isMobile]);
 
   useEffect(() => {
+    if (isMobile) return;
     const interval = setInterval(() => {
       if (mood === "happy" && !isDragging) {
         if (Math.random() < 0.15) {
@@ -153,7 +196,7 @@ const FiszPet = () => {
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [mood, isDragging, showSpeechBubble, setTemporaryMood]);
+  }, [mood, isDragging, showSpeechBubble, setTemporaryMood, isMobile]);
 
   useEffect(() => {
     return () => {
@@ -183,13 +226,99 @@ const FiszPet = () => {
     } catch {}
   };
 
+  if (isMobile && isHidden) {
+    return (
+      <motion.button
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        onClick={toggleHidden}
+        className="fixed bottom-20 left-4 z-40 h-9 w-9 rounded-full bg-beer-dark/80 backdrop-blur-md border border-beer-gold/20 flex items-center justify-center text-sm hover:bg-beer-dark/90 transition-colors md:hidden"
+        title="Pokaż Fisza"
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      >
+        🐟
+      </motion.button>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <motion.div
+        className="fixed z-[100] bottom-20 left-4 select-none md:hidden"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        <AnimatePresence>
+          {bubble && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -5, scale: 0.9 }}
+              className="absolute bottom-full left-0 mb-2 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold glass-card border border-beer-gold/20 shadow-lg pointer-events-none max-w-[200px]"
+            >
+              {bubble}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.button
+          onClick={handleClick}
+          className="relative group"
+          animate={
+            mood === "party"
+              ? { rotate: [0, 5, -5, 5, 0] }
+              : mood === "sleepy"
+                ? { y: [0, 2, 0] }
+                : {}
+          }
+          transition={
+            mood === "party"
+              ? { duration: 0.5, repeat: Infinity, repeatType: "loop" }
+              : mood === "sleepy"
+                ? { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                : {}
+          }
+        >
+          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-beer-gold via-beer-amber to-beer-copper flex items-center justify-center shadow-lg border-2 border-beer-foam/40 overflow-hidden">
+            <span className="text-lg z-10 relative" role="img" aria-label="Fisz">
+              {mood === "excited"
+                ? "🤩"
+                : mood === "sad"
+                  ? "😢"
+                  : mood === "sleepy"
+                    ? "😴"
+                    : mood === "party"
+                      ? "🕺"
+                      : mood === "curious"
+                        ? "👀"
+                        : "🐟"}
+            </span>
+          </div>
+          <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-beer-foam border border-beer-gold/30 flex items-center justify-center">
+            <span className="text-[7px]" style={{ marginTop: "-1px" }}>🎩</span>
+          </div>
+        </motion.button>
+
+        <button
+          onClick={toggleHidden}
+          className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-muted/80 border border-border/30 flex items-center justify-center text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <svg width="6" height="6" viewBox="0 0 8 8" fill="none">
+            <path d="M1 1L7 7M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </motion.div>
+    );
+  }
+
   if (isHidden) {
     return (
       <motion.button
         initial={{ opacity: 0, scale: 0 }}
         animate={{ opacity: 1, scale: 1 }}
         onClick={toggleHidden}
-        className="fixed bottom-24 left-6 z-50 h-10 w-10 rounded-full bg-beer-dark/80 backdrop-blur-md border border-beer-gold/20 flex items-center justify-center text-lg hover:bg-beer-dark/90 transition-colors"
+        className="fixed bottom-20 left-6 z-50 h-10 w-10 rounded-full bg-beer-dark/80 backdrop-blur-md border border-beer-gold/20 flex items-center justify-center text-lg hover:bg-beer-dark/90 transition-colors"
         title="Pokaż Fisza"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -202,7 +331,7 @@ const FiszPet = () => {
   return (
     <>
       <motion.div
-        className="fixed z-[100] cursor-grab active:cursor-grabbing select-none"
+        className="fixed z-[100] cursor-grab active:cursor-grabbing select-none hidden md:block"
         style={{ x: springX, y: springY }}
       >
         <AnimatePresence>
@@ -211,7 +340,7 @@ const FiszPet = () => {
               initial={{ opacity: 0, y: 10, scale: 0.8 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -5, scale: 0.9 }}
-              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold glass-card border border-beer-gold/20 shadow-lg pointer-events-none"
+              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 whitespace-nowrap px-3 py-1.5 rounded-xl text-xs font-bold glass-card border border-beer-gold/20 shadow-lg pointer-events-none max-w-[220px]"
             >
               {bubble}
               <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 rotate-45 bg-beer-dark/60 border-b border-r border-beer-gold/20" />
@@ -312,17 +441,15 @@ const FiszPet = () => {
         </motion.button>
       </motion.div>
 
-      {!isDragging && (
-        <motion.div
-          className="fixed bottom-6 left-6 z-[99] flex items-center gap-1.5 text-[10px] text-muted-foreground/50 font-body"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-        >
-          <span>{MOOD_EMOJIS[mood]}</span>
-          <span>Fisz</span>
-        </motion.div>
-      )}
+      <motion.div
+        className="fixed bottom-6 left-6 z-[99] items-center gap-1.5 text-[10px] text-muted-foreground/50 font-body hidden md:flex"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2 }}
+      >
+        <span>{MOOD_EMOJIS[mood]}</span>
+        <span>Fisz</span>
+      </motion.div>
     </>
   );
 };

@@ -79,7 +79,7 @@ const FiszVsAI = () => {
       <CartDrawer />
 
       <section className="relative pt-28 pb-16 min-h-screen">
-        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark via-beer-brown/20 to-beer-dark" />
+        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark via-beer-stout/20 to-beer-dark" />
         <div className="absolute inset-0 bg-grain opacity-30" />
 
         <div className="relative container mx-auto px-4 max-w-xl">

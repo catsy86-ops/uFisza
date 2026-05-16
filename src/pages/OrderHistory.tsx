@@ -76,7 +76,7 @@ const OrderHistory = () => {
           Powrót do sklepu
         </Link>
 
-        <h1 className="font-display text-4xl font-bold text-foreground mb-8">
+        <h1 className="font-display text-2xl md:text-4xl font-bold text-foreground mb-8">
           <Package className="inline h-8 w-8 mr-2" />
           Historia zamówień
         </h1>
@@ -102,7 +102,7 @@ const OrderHistory = () => {
                         minute: "2-digit",
                       })}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-1 break-words">
                       {order.delivery_address && `${order.delivery_address}, ${order.delivery_city}`}
                     </p>
                   </div>

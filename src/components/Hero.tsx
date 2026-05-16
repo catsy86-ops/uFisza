@@ -48,32 +48,30 @@ const Hero = () => {
       />
       <motion.div className="absolute inset-0 bg-hero-overlay" style={{ opacity: overlayOpacity }} />
 
-      {/* Beer drops */}
+      {/* Beer drops - fewer on mobile */}
       {[
         { delay: 0, left: "10%" }, { delay: 1.2, left: "25%" }, { delay: 0.5, left: "45%" },
-        { delay: 2, left: "65%" }, { delay: 1.5, left: "80%" }, { delay: 0.8, left: "92%" },
-        { delay: 2.5, left: "35%" }, { delay: 1.8, left: "55%" },
+        { delay: 2, left: "65%" }, { delay: 1.5, left: "80%" },
       ].map((p, i) => (
         <BeerDrop key={`drop-${i}`} {...p} size={4 + Math.random() * 4} />
       ))}
 
-      {/* Foam bubbles */}
+      {/* Foam bubbles - fewer on mobile */}
       {[
         { delay: 0, left: "15%", bottom: 20 }, { delay: 1, left: "30%", bottom: 40 },
         { delay: 2, left: "50%", bottom: 10 }, { delay: 0.5, left: "70%", bottom: 30 },
-        { delay: 1.5, left: "85%", bottom: 15 },
       ].map((p, i) => (
         <FoamBubble key={`foam-${i}`} {...p} />
       ))}
 
-      {/* Decorative orbs */}
+      {/* Decorative orbs - hidden on small screens for performance */}
       <motion.div
-        className="absolute top-20 left-10 w-40 h-40 rounded-full bg-beer-gold/8 blur-3xl"
+        className="hidden md:block absolute top-20 left-10 w-40 h-40 rounded-full bg-beer-gold/8 blur-3xl"
         animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-32 right-10 w-56 h-56 rounded-full bg-beer-amber/6 blur-3xl"
+        className="hidden md:block absolute bottom-32 right-10 w-56 h-56 rounded-full bg-beer-amber/6 blur-3xl"
         animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />

@@ -11,6 +11,11 @@ import ScrollProgress from "@/components/ScrollProgress";
 import CursorTrail from "@/components/CursorTrail";
 import FiszPet from "@/components/FiszPet";
 import BackToTop from "@/components/BackToTop";
+import ConfettiListener from "@/components/ConfettiListener";
+import SpinTheBottle from "@/components/SpinTheBottle";
+import FiszClicker from "@/components/FiszClicker";
+import PartyMode from "@/components/PartyMode";
+import DrunkTyper from "@/components/DrunkTyper";
 import Index from "./pages/Index.tsx";
 import AuthPage from "./pages/AuthPage.tsx";
 import OrderHistory from "./pages/OrderHistory.tsx";
@@ -57,9 +62,14 @@ const App = () => (
         <AuthProvider>
           <ScrollProgress />
           <CursorTrail />
+          <ConfettiListener />
           <AnimatedRoutes />
           <FiszPet />
           <BackToTop />
+          <SpinTheBottle />
+          <FiszClicker />
+          <PartyMode />
+          <DrunkTyper />
           <DrunkOverlay />
         </AuthProvider>
       </BrowserRouter>

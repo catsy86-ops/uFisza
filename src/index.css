@@ -437,4 +437,47 @@
   .animate-progress-shimmer {
     animation: progress-shimmer 3s ease-in-out infinite;
   }
+
+  /* Spin bottle spinner */
+  @keyframes spin-bottle {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(var(--spin-deg, 2160deg)); }
+  }
+  .animate-spin-bottle {
+    animation: spin-bottle 3s cubic-bezier(0.17, 0.67, 0.12, 0.99) forwards;
+  }
+
+  /* Confetti pop */
+  @keyframes confetti-pop {
+    0% { transform: scale(0) translateY(0); opacity: 1; }
+    50% { transform: scale(1.2) translateY(-20px); opacity: 0.8; }
+    100% { transform: scale(0.5) translateY(60px); opacity: 0; }
+  }
+  .animate-confetti-pop {
+    animation: confetti-pop 1.5s ease-out forwards;
+  }
+
+  /* Sonner beer theme overrides */
+  .toaster [data-sonner-toaster] {
+    font-family: var(--font-body) !important;
+  }
+
+  /* Party mode */
+  @keyframes party-gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes party-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+
+  [data-party="disco"] .glass-card,
+  [data-party="rave"] .glass-card,
+  [data-party="neon"] .glass-card,
+  [data-party="chill"] .glass-card {
+    border-color: hsl(var(--beer-gold) / 0.3) !important;
+  }
 }

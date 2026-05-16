@@ -44,7 +44,7 @@ const VipPage = () => {
 
       {/* Hero VIP */}
       <section className="relative pt-28 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark via-beer-brown/40 to-beer-dark" />
+        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark via-beer-stout/40 to-beer-dark" />
         <div className="absolute inset-0 bg-grain opacity-30" />
         
         {/* Floating particles */}
@@ -145,7 +145,7 @@ const VipPage = () => {
 
       {/* VIP Products */}
       <section className="py-16 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark to-beer-brown/20" />
+        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark to-beer-stout/20" />
         <div className="relative container mx-auto px-4">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}

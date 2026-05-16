@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Truck, MapPin, Beer, Fish, Package, CheckCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
@@ -73,7 +73,17 @@ const DeliveryTracker = () => {
     return result;
   };
 
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  useEffect(() => {
+    return () => {
+      timersRef.current.forEach(clearTimeout);
+    };
+  }, []);
+
   const startDelivery = () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
     setStarted(true);
     setDelivered(false);
     setCurrentStep(-1);
@@ -83,7 +93,7 @@ const DeliveryTracker = () => {
     let totalDelay = 0;
     newSteps.forEach((step, i) => {
       totalDelay += step.delay;
-      setTimeout(() => {
+      const id = setTimeout(() => {
         setCurrentStep(i);
         setFiszThought(
           FISZ_THOUGHTS[Math.floor(Math.random() * FISZ_THOUGHTS.length)]
@@ -92,6 +102,7 @@ const DeliveryTracker = () => {
           setDelivered(true);
         }
       }, totalDelay);
+      timersRef.current.push(id);
     });
   };
 
@@ -101,8 +112,8 @@ const DeliveryTracker = () => {
       <CartDrawer />
 
       <section className="relative pt-28 pb-16 min-h-screen">
-        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark via-beer-brown/20 to-beer-dark" />
-        <div className="absolute inset-0 bg-grain opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-beer-dark via-beer-stout/20 to-beer-dark pointer-events-none" />
+        <div className="absolute inset-0 bg-grain opacity-30 pointer-events-none" />
 
         <div className="relative container mx-auto px-4 max-w-lg">
           <motion.div
@@ -125,10 +136,10 @@ const DeliveryTracker = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="glass-card rounded-3xl p-6 md:p-8 border border-beer-gold/15"
+            className="glass-card rounded-3xl p-5 md:p-8 border border-beer-gold/15"
           >
-            {/* Fake map */}
-            <div className="relative rounded-2xl overflow-hidden mb-6 border border-beer-gold/10 aspect-video bg-beer-dark/50 flex items-center justify-center">
+            {/* Map */}
+            <div className="relative rounded-2xl overflow-hidden mb-6 border border-beer-gold/10 min-h-[200px] md:min-h-[280px] aspect-square sm:aspect-[4/3] md:aspect-video bg-beer-dark/50 flex items-center justify-center">
               {!started ? (
                 <div className="text-center">
                   <MapPin className="h-10 w-10 text-beer-gold/40 mx-auto mb-2" />
@@ -143,7 +154,7 @@ const DeliveryTracker = () => {
                   }}
                   transition={{ duration: (steps.length * 1.5) || 10, ease: "linear" }}
                 >
-                  <Fish className="h-6 w-6 text-beer-gold" />
+                  <Fish className="h-8 w-8 md:h-10 md:w-10 text-beer-gold" />
                 </motion.div>
               )}
             </div>
@@ -152,12 +163,12 @@ const DeliveryTracker = () => {
               <div className="text-center">
                 <Button
                   onClick={startDelivery}
-                  className="bg-beer-gold hover:bg-beer-gold/90 text-beer-dark font-bold gap-2 px-8"
+                  className="bg-beer-gold hover:bg-beer-gold/90 text-beer-dark font-bold gap-2 px-8 min-h-[44px]"
                 >
                   <Package className="h-4 w-4" />
                   Rozpocznij śledzenie paczki
                 </Button>
-                <p className="text-muted-foreground/40 text-[10px] mt-3 italic">
+                <p className="text-muted-foreground/60 text-[11px] mt-3 italic">
                   * Fisz nie gwarantuje szybkości, trzeźwości ani dotarcia paczki
                 </p>
               </div>
@@ -168,41 +179,43 @@ const DeliveryTracker = () => {
                   Status dostawy:
                 </div>
 
-                <AnimatePresence>
-                  {steps.map((step, i) => {
-                    const done = i <= currentStep;
-                    const active = i === currentStep && !delivered;
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: i <= currentStep + 1 ? 1 : 0, x: 0 }}
-                        className="flex items-start gap-3"
-                      >
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${
-                            done
-                              ? "bg-beer-gold/20 border border-beer-gold/30 text-beer-gold"
-                              : "bg-muted/30 border border-border/20 text-muted-foreground"
-                          }`}
+                <div className="max-h-[50vh] overflow-y-auto pr-1 space-y-3">
+                  <AnimatePresence>
+                    {steps.map((step, i) => {
+                      const done = i <= currentStep;
+                      const active = i === currentStep && !delivered;
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: i <= currentStep + 1 ? 1 : 0, x: 0 }}
+                          className="flex items-start gap-3"
                         >
-                          {done ? "✓" : step.icon}
-                        </div>
-                        <div className="flex-1 pt-1">
-                          <p
-                            className={`text-sm ${
-                              done ? "text-foreground font-semibold" : "text-muted-foreground"
-                            } ${active ? "animate-pulse text-beer-gold" : ""}`}
+                          <div
+                            className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm flex-shrink-0 ${
+                              done
+                                ? "bg-beer-gold/20 border border-beer-gold/30 text-beer-gold"
+                                : "bg-muted/30 border border-border/20 text-muted-foreground"
+                            }`}
                           >
-                            {step.text}
-                          </p>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                            {done ? "✓" : step.icon}
+                          </div>
+                          <div className="flex-1 pt-0.5 min-w-0">
+                            <p
+                              className={`text-sm break-words ${
+                                done ? "text-foreground font-semibold" : "text-muted-foreground"
+                              } ${active ? "animate-pulse text-beer-gold" : ""}`}
+                            >
+                              {step.text}
+                            </p>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
 
-                {/* Fisz's current thought */}
+                {/* Fisz's thought */}
                 {currentStep >= 0 && !delivered && (
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
@@ -231,7 +244,7 @@ const DeliveryTracker = () => {
                     <Button
                       onClick={startDelivery}
                       variant="ghost"
-                      className="mt-3 text-xs text-beer-gold/70 hover:text-beer-gold"
+                      className="mt-3 text-xs text-beer-gold/70 hover:text-beer-gold min-h-[44px]"
                     >
                       Śledź kolejną paczkę
                     </Button>

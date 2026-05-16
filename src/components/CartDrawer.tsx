@@ -11,6 +11,15 @@ import CouponTimer from "@/components/CouponTimer";
 import { getOrderWisdom } from "@/lib/fiszWisdoms";
 import { addStamp } from "@/stores/loyaltyStore";
 
+function useBodyScrollLock(locked: boolean) {
+  useEffect(() => {
+    if (!locked) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = original; };
+  }, [locked]);
+}
+
 const FREE_DELIVERY_THRESHOLD = 100;
 
 const CartDrawer = () => {
@@ -25,6 +34,8 @@ const CartDrawer = () => {
   const [ordering, setOrdering] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [showCoupons, setShowCoupons] = useState(false);
+
+  useBodyScrollLock(isOpen);
 
   // Reactive safety net: re-validate the active coupon whenever cart contents
   // change while the drawer is mounted. Covers any edge case where items are
@@ -125,6 +136,7 @@ const CartDrawer = () => {
     // Mark coupon as used and add loyalty stamp
     if (coupon) markCouponUsed();
     const milestone = addStamp();
+    try { window.dispatchEvent(new CustomEvent("fisz-order-complete")); } catch {}
     toast.success(
       coupon
         ? `Zamówienie złożone z rabatem ${cartDiscount.toFixed(2)} zł! 📦🐟`
@@ -368,13 +380,13 @@ const CartDrawer = () => {
                   <Truck className="h-4 w-4 text-beer-amber" />
                   <h3 className="font-display font-bold text-sm">Adres dostawy</h3>
                 </div>
-                <input type="text" placeholder="Ulica i numer" value={address} onChange={(e) => setAddress(e.target.value)}
+                <input type="text" placeholder="Ulica i numer" value={address} onChange={(e) => setAddress(e.target.value)} autoComplete="street-address" enterKeyHint="next"
                   className="w-full px-4 py-3 rounded-xl border border-input bg-background/80 text-foreground text-sm focus:ring-2 focus:ring-beer-amber/30 focus:border-beer-amber/40 outline-none transition-all" />
                 <div className="flex gap-2">
-                  <input type="text" placeholder="Miasto" value={city} onChange={(e) => setCity(e.target.value)}
+                  <input type="text" placeholder="Miasto" value={city} onChange={(e) => setCity(e.target.value)} autoComplete="address-level2" enterKeyHint="next"
                     className="flex-1 px-4 py-3 rounded-xl border border-input bg-background/80 text-foreground text-sm focus:ring-2 focus:ring-beer-amber/30 focus:border-beer-amber/40 outline-none transition-all" />
-                  <input type="text" placeholder="Kod" value={postalCode} onChange={(e) => setPostalCode(e.target.value)}
-                    className="w-24 px-4 py-3 rounded-xl border border-input bg-background/80 text-foreground text-sm focus:ring-2 focus:ring-beer-amber/30 focus:border-beer-amber/40 outline-none transition-all" />
+                  <input type="text" placeholder="Kod" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} autoComplete="postal-code" enterKeyHint="done"
+                    className="w-28 px-4 py-3 rounded-xl border border-input bg-background/80 text-foreground text-sm focus:ring-2 focus:ring-beer-amber/30 focus:border-beer-amber/40 outline-none transition-all" />
                 </div>
               </motion.div>
 

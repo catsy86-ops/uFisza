@@ -25,7 +25,7 @@ const BackToTop = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={scrollToTop}
-          className="fixed bottom-32 right-6 z-40 h-11 w-11 rounded-full bg-gradient-to-br from-beer-amber to-beer-gold text-beer-dark shadow-lg border border-beer-foam/20 flex items-center justify-center group overflow-hidden"
+          className="fixed bottom-20 right-4 z-[51] h-10 w-10 md:h-11 md:w-11 rounded-full bg-gradient-to-br from-beer-amber to-beer-gold text-beer-dark shadow-lg border border-beer-foam/20 flex items-center justify-center group overflow-hidden md:bottom-20 md:right-6"
           title="Wróć na górę"
         >
           <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/0 to-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -33,7 +33,7 @@ const BackToTop = () => {
             animate={{ y: [0, -2, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           >
-            <ArrowUp className="h-5 w-5" />
+            <ArrowUp className="h-4 w-4 md:h-5 md:w-5" />
           </motion.div>
           <motion.div
             className="absolute -top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100"

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Product } from "@/types/product";
@@ -18,11 +18,16 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const [isFav, setIsFav] = useState(false);
   const [quickView, setQuickView] = useState(false);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isHovering = useRef(false);
 
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
+
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return;
+    if (isTouchDevice || !cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width;
     const y = (e.clientY - rect.top) / rect.height;
@@ -35,6 +40,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
   };
 
   const handleMouseEnter = () => {
+    if (isTouchDevice) return;
     isHovering.current = true;
   };
 
@@ -71,7 +77,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       <motion.div
         ref={cardRef}
         className="relative bg-card rounded-2xl overflow-hidden border border-border/40 shadow-sm card-3d-tilt"
-        style={{
+        style={isTouchDevice ? undefined : {
           transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
           transition: isHovering.current ? "transform 0.1s ease-out" : "transform 0.4s ease-out",
         }}
@@ -79,7 +85,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         whileHover={{
-          y: -8,
+          y: isTouchDevice ? -4 : -8,
           transition: { type: "spring", stiffness: 300, damping: 20 },
         }}
       >
@@ -122,7 +128,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           </div>
 
           {/* Floating action buttons */}
-          <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+          <div className={`absolute bottom-3 right-3 flex gap-2 ${isTouchDevice ? "opacity-100 translate-y-0" : "opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0"} transition-all duration-300`}>
             <motion.button
               onClick={handleFav}
               whileTap={{ scale: 0.85 }}

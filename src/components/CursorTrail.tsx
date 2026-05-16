@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 interface Bubble {
   id: number;
@@ -14,9 +14,14 @@ const CursorTrail = () => {
   const frameRef = useRef<number>(0);
   const lastPosRef = useRef({ x: 0, y: 0 });
   const counterRef = useRef(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768 || "ontouchstart" in window);
+  }, []);
 
   const addBubble = useCallback((x: number, y: number) => {
-    if (bubblesRef.current.length > 20) return;
+    if (bubblesRef.current.length > 12) return;
     bubblesRef.current.push({
       id: counterRef.current++,
       x: x + (Math.random() - 0.5) * 10,
@@ -27,6 +32,8 @@ const CursorTrail = () => {
   }, []);
 
   useEffect(() => {
+    if (isMobile) return;
+
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -49,15 +56,7 @@ const CursorTrail = () => {
       }
     };
 
-    const onTouchMove = (e: TouchEvent) => {
-      const touch = e.touches[0];
-      if (touch) {
-        addBubble(touch.clientX, touch.clientY);
-      }
-    };
-
     window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -94,15 +93,16 @@ const CursorTrail = () => {
       cancelAnimationFrame(frameRef.current);
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("touchmove", onTouchMove);
     };
-  }, [addBubble]);
+  }, [isMobile, addBubble]);
+
+  if (isMobile) return null;
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 z-[55] pointer-events-none"
-      style={{ mixBlendMode: "screen" }}
+      style={{ opacity: 0.7 }}
     />
   );
 };

@@ -377,7 +377,7 @@ const FiszWisdom = () => {
     })[s];
 
   return (
-    <div className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-3 pointer-events-none">
+    <div className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-3 pointer-events-none md:bottom-6 md:left-6">
       <AnimatePresence>
         {open && (
           <motion.div
