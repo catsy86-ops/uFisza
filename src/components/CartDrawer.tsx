@@ -6,7 +6,7 @@ import { X, Plus, Minus, Trash2, ShoppingBag, Truck, CreditCard, Gift, Sparkles,
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { AVAILABLE_COUPONS } from "@/stores/cartStore";
+import { AVAILABLE_COUPONS, FREE_DELIVERY_THRESHOLD, DELIVERY_FEE } from "@/stores/cartStore";
 import CouponTimer from "@/components/CouponTimer";
 import { getOrderWisdom } from "@/lib/fiszWisdoms";
 import { addStamp } from "@/stores/loyaltyStore";
@@ -20,10 +20,8 @@ function useBodyScrollLock(locked: boolean) {
   }, [locked]);
 }
 
-const FREE_DELIVERY_THRESHOLD = 100;
-
 const CartDrawer = () => {
-  const { items, isOpen, toggleCart, removeItem, updateQuantity, clearCart, subtotal, discount, total, coupon, applyCoupon, removeCoupon, lastInvalidated, dismissInvalidated, reapplyLastInvalidated, markCouponUsed } =
+  const { items, isOpen, toggleCart, removeItem, updateQuantity, clearCart, subtotal, discount, deliveryFee, total, coupon, applyCoupon, removeCoupon, lastInvalidated, dismissInvalidated, reapplyLastInvalidated, markCouponUsed } =
     useCartStore();
   const validateCoupon = useCartStore((s) => s.validateCoupon);
   const { user } = useAuth();
@@ -75,6 +73,7 @@ const CartDrawer = () => {
 
   const cartSubtotal = subtotal();
   const cartDiscount = discount();
+  const cartDeliveryFee = deliveryFee();
   const cartTotal = total();
 
   const handleApplyCoupon = (codeOverride?: string) => {
@@ -89,14 +88,16 @@ const CartDrawer = () => {
     }
   };
 
-  const deliveryProgress = Math.min((cartTotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
-  const freeDelivery = cartTotal >= FREE_DELIVERY_THRESHOLD;
+  const deliveryProgress = Math.min((cartSubtotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
+  const freeDelivery = cartSubtotal >= FREE_DELIVERY_THRESHOLD;
 
 
   const handleOrder = async () => {
     if (items.length === 0) { toast.error("Koszyk jest pusty! 🐟"); return; }
     if (!user) { toast.error("Musisz być zalogowany!"); toggleCart(); navigate("/auth"); return; }
-    if (!address.trim()) { toast.error("Podaj adres dostawy!"); return; }
+    if (!address.trim()) { toast.error("Podaj ulicę i numer!"); return; }
+    if (!city.trim()) { toast.error("Podaj miasto!"); return; }
+    if (!postalCode.trim()) { toast.error("Podaj kod pocztowy!"); return; }
 
     // Twarda re-walidacja kuponu tuż przed złożeniem zamówienia.
     // Chroni przed sytuacją, gdy koszyk leżał otwarty długo (kupon wygasł)
@@ -236,7 +237,7 @@ const CartDrawer = () => {
                 ) : (
                   <>
                     <Truck className="h-3.5 w-3.5 text-beer-amber" />
-                    Brakuje <span className="font-bold text-foreground">{(FREE_DELIVERY_THRESHOLD - cartTotal).toFixed(0)} zł</span> do darmowej dostawy
+                    Brakuje <span className="font-bold text-foreground">{(FREE_DELIVERY_THRESHOLD - cartSubtotal).toFixed(0)} zł</span> do darmowej dostawy
                   </>
                 )}
               </span>
@@ -412,7 +413,7 @@ const CartDrawer = () => {
                       Dostawa
                     </span>
                     <span className={`font-semibold ${freeDelivery ? "text-beer-hop" : "text-foreground"}`}>
-                      {freeDelivery ? "GRATIS" : "wg cennika"}
+                      {freeDelivery ? "GRATIS" : `${DELIVERY_FEE.toFixed(2)} zł`}
                     </span>
                   </div>
                   <AnimatePresence>
@@ -782,6 +783,15 @@ const CartDrawer = () => {
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Suma częściowa</span>
                 <span className="font-semibold text-foreground">{cartSubtotal.toFixed(2)} zł</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground flex items-center gap-1">
+                  <Truck className="h-3.5 w-3.5" />
+                  Dostawa
+                </span>
+                <span className={`font-semibold ${freeDelivery ? "text-beer-hop" : "text-foreground"}`}>
+                  {freeDelivery ? "GRATIS" : `${DELIVERY_FEE.toFixed(2)} zł`}
+                </span>
               </div>
               {cartDiscount > 0 && (
                 <motion.div

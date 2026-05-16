@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useCartStore } from "./cartStore";
 import type { Product } from "@/types/product";
 
-vi.mock("sonner", () => ({
-  toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-    warning: vi.fn(),
-    info: vi.fn(),
-  },
-}));
+vi.mock("sonner", () => {
+  const fn = vi.fn();
+  fn.success = vi.fn();
+  fn.error = vi.fn();
+  fn.warning = vi.fn();
+  fn.info = vi.fn();
+  return { toast: fn };
+});
 
 const mkProduct = (id: string, price: number): Product => ({
   id,
@@ -23,7 +23,7 @@ const mkProduct = (id: string, price: number): Product => ({
 });
 
 const reset = () =>
-  useCartStore.setState({ items: [], coupon: null, lastInvalidated: null, isOpen: false });
+  useCartStore.setState({ items: [], coupon: null, lastInvalidated: null, isOpen: false, removalStreak: 0 });
 
 describe("cartStore — coupon validation on quantity changes", () => {
   beforeEach(() => reset());
@@ -129,5 +129,56 @@ describe("cartStore — reapplyLastInvalidated", () => {
     expect(useCartStore.getState().lastInvalidated).not.toBeNull();
     dismissInvalidated();
     expect(useCartStore.getState().lastInvalidated).toBeNull();
+  });
+});
+
+describe("cartStore — delivery fee", () => {
+  beforeEach(() => reset());
+
+  it("charges delivery fee when subtotal is below threshold", () => {
+    const { addItem, subtotal, deliveryFee, total } = useCartStore.getState();
+    const p = mkProduct("p1", 30);
+    addItem(p);
+    addItem(p); // 60 < 100
+    expect(subtotal()).toBe(60);
+    expect(deliveryFee()).toBe(9.99);
+    expect(total()).toBeCloseTo(60 + 9.99, 2);
+  });
+
+  it("gives free delivery when subtotal meets threshold", () => {
+    const { addItem, subtotal, deliveryFee, total } = useCartStore.getState();
+    const p = mkProduct("p1", 60);
+    addItem(p);
+    addItem(p); // 120 >= 100
+    expect(subtotal()).toBe(120);
+    expect(deliveryFee()).toBe(0);
+    expect(total()).toBe(120);
+  });
+
+  it("returns 0 delivery fee for empty cart", () => {
+    const { deliveryFee } = useCartStore.getState();
+    expect(deliveryFee()).toBe(0);
+  });
+
+  it("includes delivery fee in total even with coupon", () => {
+    const { addItem, applyCoupon, subtotal, deliveryFee, total } = useCartStore.getState();
+    const p = mkProduct("p1", 30);
+    addItem(p);
+    addItem(p); // 60 < 100, delivery fee applies
+    applyCoupon("FISZ10"); // 10% off
+    expect(subtotal()).toBe(60);
+    expect(deliveryFee()).toBe(9.99);
+    // total = subtotal - discount + deliveryFee
+    expect(total()).toBeCloseTo(60 - 6 + 9.99, 2);
+  });
+
+  it("gives free delivery with coupon when subtotal meets threshold", () => {
+    const { addItem, applyCoupon, subtotal, deliveryFee, total } = useCartStore.getState();
+    const p = mkProduct("p1", 60);
+    addItem(p);
+    addItem(p); // 120 >= 100
+    applyCoupon("FISZ10"); // 10% off
+    expect(deliveryFee()).toBe(0);
+    expect(total()).toBeCloseTo(120 - 12, 2);
   });
 });

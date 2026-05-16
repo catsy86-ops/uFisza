@@ -63,6 +63,9 @@ export interface InvalidatedCoupon {
   at: number;
 }
 
+export const FREE_DELIVERY_THRESHOLD = 100;
+export const DELIVERY_FEE = 9.99;
+
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
@@ -82,6 +85,7 @@ interface CartStore {
   markCouponUsed: () => void;
   subtotal: () => number;
   discount: () => number;
+  deliveryFee: () => number;
   total: () => number;
   itemCount: () => number;
 }
@@ -223,7 +227,12 @@ export const useCartStore = create<CartStore>((set, get) => {
       if (coupon.type === "percent") return +(sub * (coupon.value / 100)).toFixed(2);
       return Math.min(coupon.value, sub);
     },
-    total: () => Math.max(0, get().subtotal() - get().discount()),
+    deliveryFee: () => {
+      if (get().items.length === 0) return 0;
+      const sub = calcSubtotal(get().items);
+      return sub >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+    },
+    total: () => Math.max(0, get().subtotal() - get().discount() + get().deliveryFee()),
     itemCount: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
   };
 });
