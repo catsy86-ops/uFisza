@@ -6,9 +6,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: "html",
+  reporter: "list",
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: "http://localhost:8081",
     trace: "on-first-retry",
   },
   projects: [
@@ -16,10 +16,18 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    {
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 5"] },
+    },
+    {
+      name: "mobile-safari",
+      use: { ...devices["iPhone 14"] },
+    },
   ],
   webServer: {
     command: "npx vite",
-    url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
+    url: "http://localhost:8081",
+    reuseExistingServer: true,
   },
 });
