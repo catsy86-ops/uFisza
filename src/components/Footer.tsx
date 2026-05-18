@@ -192,14 +192,13 @@ const Footer = () => (
         <div className="rounded-2xl overflow-hidden ring-1 ring-beer-gold/15 aspect-video max-h-[300px] animated-border shadow-[0_10px_40px_-10px_hsl(var(--beer-dark)/0.5)]">
           <iframe
             title="Lokalizacja U Fisza - ul. Łucznicza, Szczecin"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2377.5!2d14.55!3d53.43!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zTHVjem5pY3phLCBTemN6ZWNpbg!5e0!3m2!1spl!2spl!4v1700000000000!5m2!1spl!2spl&q=%C5%81ucznicza+Szczecin"
+            src="https://maps.google.com/maps?q=%C5%81ucznicza+Szczecin&output=embed&hl=pl&z=15"
             width="100%"
             height="100%"
             style={{ border: 0 }}
             allowFullScreen
             loading="lazy"
-            referrerPolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+            referrerPolicy="no-referrer-when-downgrade"
           />
         </div>
       </motion.div>

@@ -12,8 +12,7 @@ test.describe("Dostawca Fisz", () => {
     if (await startBtn.count() > 0) {
       await startBtn.click();
       await page.waitForTimeout(1000);
-      // Should see status updates
-      await expect(page.locator("text=Status dostawy")).toBeVisible({ timeout: 3000 });
+      await expect(page.locator("text=Historia dostawy")).toBeVisible({ timeout: 3000 });
     }
   });
 
